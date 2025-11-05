@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 class TextPreprocessor:
     """Preprocess Korean text data"""
 
-    def __init__(self, huggingface_model: str = 'LiquidAI/LFM2-350M-Extract'):
+    def __init__(self, huggingface_model: str = 'LiquidAI/LFM2-350M-Extract', mecab_path='C:/mecab/mecab-ko-dic'):
         """Initialize the text preprocessor"""
         self.mecab = None
+        self.mecab_path = mecab_path
         self._initialize_tokenizer()
         self._initialize_huggingface_model(huggingface_model)
 
@@ -28,7 +29,7 @@ class TextPreprocessor:
         """Initialize Korean tokenizer (Mecab)"""
         try:
             from konlpy.tag import Mecab
-            self.mecab = Mecab(dicpath='C:/mecab/mecab-ko-dic')
+            self.mecab = Mecab(dicpath=self.mecab_path)
             logger.info("Mecab tokenizer initialized successfully")
         except Exception as e:
             logger.warning(f"Mecab not available: {e}. Falling back to simple tokenization")
