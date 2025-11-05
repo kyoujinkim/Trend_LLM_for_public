@@ -17,6 +17,9 @@ CSVS = [
     "data_4"
 ]
 
+# Text Preprocessing Settings
+BATCH_SIZE=8
+
 # Text Processing Settings
 MIN_KEYWORD_LENGTH = 2
 MAX_KEYWORD_LENGTH = 20
