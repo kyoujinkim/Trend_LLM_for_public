@@ -44,6 +44,9 @@ class TextPreprocessor:
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
 
+            # IMPORTANT: For decoder-only models, use left padding
+            self.tokenizer.padding_side = 'left'
+
             # Use proper torch dtype instead of string
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.huggingface_model,
