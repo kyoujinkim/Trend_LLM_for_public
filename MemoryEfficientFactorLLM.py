@@ -222,19 +222,28 @@ class MemoryEfficientFactorLLM:
         return report_path
 
     def _preprocess_in_chunks(self):
-        """Preprocess text data in chunks"""
+        """Preprocess text data in chunks with GPU-optimized batch processing"""
         preprocessed_by_date = defaultdict(list)
 
         pbar = tqdm(self.loader.iter_chunks(), desc="Total rows processed")
         for chunk in pbar: # Preprocess chunk
             total_row = len(chunk)
-            for _, row in chunk.iterrows():
-                pbar.set_postfix(current = _, total = total_row)
-                date = row['date']
 
-                combined = f"{row.get('title', '')} {row.get('content', '')}"
-                combined_keyword = self.preprocessor.keywordify_text(combined)
+            # Prepare batch data
+            dates = chunk['date'].tolist()
+            combined_texts = [
+                f"{row.get('title', '')} {row.get('content', '')}"
+                for _, row in chunk.iterrows()
+            ]
 
+            # Batch keywordify using GPU (MUCH FASTER!)
+            combined_keywords = self.preprocessor.keywordify_text_batch(
+                combined_texts,
+                batch_size=config.BATCH_SIZE  # Adjust based on your GPU memory (8, 16, 32, etc.)
+            )
+
+            # Process results
+            for date, combined, combined_keyword in zip(dates, combined_texts, combined_keywords):
                 # Clean title
                 text_cleaned = self.preprocessor.preprocess_text(
                     combined_keyword,
@@ -244,8 +253,10 @@ class MemoryEfficientFactorLLM:
                 if combined.strip():
                     preprocessed_by_date[str(date)].append(text_cleaned)
 
+            pbar.set_postfix(batch_size=len(combined_texts))
+
             # Garbage collection
-            del chunk
+            del chunk, combined_texts, combined_keywords
             if config.AGGRESSIVE_GC:
                 gc.collect()
 
