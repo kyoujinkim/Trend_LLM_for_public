@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class MemoryEfficientFactorLLM:
     """Memory-efficient version of FACTOR-LLM for large datasets"""
 
-    def __init__(self, use_llm: bool = False, chunk_size: int = None, huggingface_model: str = 'LiquidAI/LFM2-350M-Extract', mecab_path: str = 'C:/mecab/mecab-ko-dic'):
+    def __init__(self, use_llm: bool = False, chunk_size: int = None, huggingface_model: str = 'LGAI-EXAONE/EXAONE-4.0-1.2B', mecab_path: str = 'C:/mecab/mecab-ko-dic'):
         """
         Initialize Memory-Efficient FACTOR-LLM
 
