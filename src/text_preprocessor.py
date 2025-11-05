@@ -177,6 +177,7 @@ class TextPreprocessor:
                 for output in outputs:
                     decoded_output = self.tokenizer.decode(output, skip_special_tokens=True)
                     cleansed_output = decoded_output.split('assistant')[-1].replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
+                    print(cleansed_output)
                     all_results.append(cleansed_output)
 
             except Exception as e:
