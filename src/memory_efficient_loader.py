@@ -27,7 +27,7 @@ class MemoryEfficientLoader:
         self.csv_files = csv_files
         self.total_rows = 0
 
-    def iter_chunks(self, columns) -> Iterator[pd.DataFrame]:
+    def iter_chunks(self, columns:list=None) -> Iterator[pd.DataFrame]:
         """
         Iterate through CSV files in chunks
 
