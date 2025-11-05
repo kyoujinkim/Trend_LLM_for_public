@@ -48,8 +48,7 @@ class TextPreprocessor:
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.huggingface_model,
                 device_map='auto',
-                torch_dtype=torch.bfloat16,
-                attn_implementation="flash_attention_2" if torch.cuda.is_available() else "eager"
+                dtype=torch.bfloat16,
             )
 
             # Enable gradient checkpointing for memory efficiency (optional)
@@ -274,7 +273,7 @@ class TextPreprocessor:
                 text = text.replace(word, ' ')
             return text
 
-        cleansed_text = text.replace_match(text, [' 무단 ', ' 전재 ', ' 금지 ', ' 학습 ', ' 활용 ', ' 저작 ', ' 주제 ', ' 추출 ', ' 년 ', ' 월 ', ' 일 ', ' 로이터 '])
+        cleansed_text = replace_match(text, [' 무단 ', ' 전재 ', ' 금지 ', ' 학습 ', ' 활용 ', ' 저작 ', ' 주제 ', ' 추출 ', ' 년 ', ' 월 ', ' 일 ', ' 로이터 '])
         return cleansed_text
 
     def tokenize(self, text: str) -> List[str]:
