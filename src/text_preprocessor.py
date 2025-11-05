@@ -8,6 +8,7 @@ from typing import List, Tuple
 from bs4 import BeautifulSoup
 import pandas as pd
 from tqdm import tqdm
+import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 logging.basicConfig(level=logging.INFO)
@@ -17,10 +18,9 @@ logger = logging.getLogger(__name__)
 class TextPreprocessor:
     """Preprocess Korean text data"""
 
-    def __init__(self, huggingface_model: str = 'LiquidAI/LFM2-350M-Extract', mecab_path: str = 'C:/mecab/mecab-ko-dic'):
+    def __init__(self, huggingface_model: str = 'LiquidAI/LFM2-350M-Extract'):
         """Initialize the text preprocessor"""
         self.mecab = None
-        self.mecab_path = mecab_path
         self._initialize_tokenizer()
         self._initialize_huggingface_model(huggingface_model)
 
@@ -28,7 +28,7 @@ class TextPreprocessor:
         """Initialize Korean tokenizer (Mecab)"""
         try:
             from konlpy.tag import Mecab
-            self.mecab = Mecab(dicpath=self.mecab_path)
+            self.mecab = Mecab(dicpath='C:/mecab/mecab-ko-dic')
             logger.info("Mecab tokenizer initialized successfully")
         except Exception as e:
             logger.warning(f"Mecab not available: {e}. Falling back to simple tokenization")
@@ -39,8 +39,22 @@ class TextPreprocessor:
         # load model
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.huggingface_model)
-            self.model = AutoModelForCausalLM.from_pretrained(self.huggingface_model, device_map='auto', dtype='bfloat16')
-            logger.info("Huggingface model loaded successfully")
+            # Set padding token if not set
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+
+            # Use proper torch dtype instead of string
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.huggingface_model,
+                device_map='auto',
+                torch_dtype=torch.bfloat16,
+                attn_implementation="flash_attention_2" if torch.cuda.is_available() else "eager"
+            )
+
+            # Enable gradient checkpointing for memory efficiency (optional)
+            # self.model.gradient_checkpointing_enable()
+
+            logger.info(f"Huggingface model loaded successfully on {self.model.device}")
         except Exception as e:
             logger.error(f"Failed to load Huggingface model: {e}")
             self.tokenizer = None
@@ -48,35 +62,39 @@ class TextPreprocessor:
 
     def keywordify_text(self, text: str) -> str:
         """
-        Extract keywords using Huggingface model
+        Extract keywords using Huggingface model (single text)
+        For better GPU utilization, use keywordify_text_batch() instead.
+
         Args:
-            texts: List of text documents
-            top_n: Number of top keywords (uses self.top_n if None)
+            text: Text document
         Returns:
-            List of (keyword, score) tuples
+            Extracted keywords as string
         """
         if self.tokenizer is None or self.model is None:
             logger.error("Huggingface model is not loaded")
-            return []
+            return ""
 
         prompt = """
         이 글에서 핵심 주제를 추출해줘
         """
-        input = self.tokenizer.apply_chat_template(
+        input_ids = self.tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt + text}],
             add_generation_prompt=True,
             return_tensors="pt",
             tokenize=True,
         ).to(self.model.device)
+
         try:
-            output = self.model.generate(
-                input,
-                do_sample=True,
-                temperature=0.3,
-                min_p=0.15,
-                repetition_penalty=1.05,
-                max_new_tokens=256,
-            )
+            with torch.inference_mode():
+                output = self.model.generate(
+                    input_ids,
+                    do_sample=True,
+                    temperature=0.3,
+                    min_p=0.15,
+                    repetition_penalty=1.05,
+                    max_new_tokens=256,
+                    pad_token_id=self.tokenizer.pad_token_id,
+                )
             decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
             cleansed_output = decoded_output.split('assistant')[-1].replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
 
@@ -85,6 +103,87 @@ class TextPreprocessor:
             cleansed_output = text.replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
 
         return cleansed_output
+
+    def keywordify_text_batch(self, texts: List[str], batch_size: int = 8) -> List[str]:
+        """
+        Extract keywords using Huggingface model with batch processing for better GPU utilization.
+
+        Args:
+            texts: List of text documents
+            batch_size: Number of texts to process in parallel (adjust based on GPU memory)
+        Returns:
+            List of extracted keywords as strings
+        """
+        if self.tokenizer is None or self.model is None:
+            logger.error("Huggingface model is not loaded")
+            return [""] * len(texts)
+
+        prompt = """
+        이 글에서 핵심 주제를 추출해줘
+        """
+
+        all_results = []
+
+        # Process in batches
+        for i in tqdm(range(0, len(texts), batch_size), desc="Keywordifying texts"):
+            batch_texts = texts[i:i + batch_size]
+
+            # Prepare chat templates for batch
+            batch_messages = [
+                [{"role": "user", "content": prompt + text}]
+                for text in batch_texts
+            ]
+
+            try:
+                # Tokenize batch with proper padding
+                batch_inputs = []
+                for messages in batch_messages:
+                    input_ids = self.tokenizer.apply_chat_template(
+                        messages,
+                        add_generation_prompt=True,
+                        return_tensors="pt",
+                        tokenize=True,
+                    )
+                    batch_inputs.append(input_ids[0])
+
+                # Pad sequences to same length
+                from torch.nn.utils.rnn import pad_sequence
+                padded_inputs = pad_sequence(
+                    batch_inputs,
+                    batch_first=True,
+                    padding_value=self.tokenizer.pad_token_id
+                ).to(self.model.device)
+
+                # Create attention mask
+                attention_mask = (padded_inputs != self.tokenizer.pad_token_id).long()
+
+                # Generate with batch processing
+                with torch.inference_mode():
+                    outputs = self.model.generate(
+                        padded_inputs,
+                        attention_mask=attention_mask,
+                        do_sample=True,
+                        temperature=0.3,
+                        min_p=0.15,
+                        repetition_penalty=1.05,
+                        max_new_tokens=256,
+                        pad_token_id=self.tokenizer.pad_token_id,
+                    )
+
+                # Decode batch outputs
+                for output in outputs:
+                    decoded_output = self.tokenizer.decode(output, skip_special_tokens=True)
+                    cleansed_output = decoded_output.split('assistant')[-1].replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
+                    all_results.append(cleansed_output)
+
+            except Exception as e:
+                logger.error(f"Batch extraction failed: {e}")
+                # Fallback for failed batch
+                for text in batch_texts:
+                    cleansed = text.replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
+                    all_results.append(cleansed)
+
+        return all_results
 
     def clean_html(self, text: str) -> str:
         """
@@ -174,7 +273,7 @@ class TextPreprocessor:
                 text = text.replace(word, ' ')
             return text
 
-        cleansed_text = replace_match(text, [' 무단 ', ' 전재 ', ' 금지 ', ' 학습 ', ' 활용 ', ' 저작 ', ' 주제 ', ' 추출 ', ' 년 ', ' 월 ', ' 일 ', ' 로이터 '])
+        cleansed_text = text.replace_match(text, [' 무단 ', ' 전재 ', ' 금지 ', ' 학습 ', ' 활용 ', ' 저작 ', ' 주제 ', ' 추출 ', ' 년 ', ' 월 ', ' 일 ', ' 로이터 '])
         return cleansed_text
 
     def tokenize(self, text: str) -> List[str]:
