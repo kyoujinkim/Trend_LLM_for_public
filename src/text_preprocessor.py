@@ -45,7 +45,7 @@ class TextPreprocessor:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
 
             # IMPORTANT: For decoder-only models, use left padding
-            self.tokenizer.padding_side = 'left'
+            #self.tokenizer.padding_side = 'left'
 
             # Use proper torch dtype instead of string
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -122,7 +122,7 @@ class TextPreprocessor:
             return [""] * len(texts)
 
         prompt = """
-        이 글에서 핵심 주제를 추출해줘
+        이 글에서 중요한 내용을 내포하는 키워드 목록을 추출하세요. 중요하지 않은 광고 문구는 포함하지 마세요.
         """
 
         all_results = []
@@ -146,6 +146,7 @@ class TextPreprocessor:
                         add_generation_prompt=True,
                         return_tensors="pt",
                         tokenize=True,
+                        enable_thinking=False
                     )
                     batch_inputs.append(input_ids[0])
 
@@ -158,25 +159,25 @@ class TextPreprocessor:
                 ).to(self.model.device)
 
                 # Create attention mask
-                attention_mask = (padded_inputs != self.tokenizer.pad_token_id).long()
+                #attention_mask = (padded_inputs != self.tokenizer.pad_token_id).long()
 
                 # Generate with batch processing
                 with torch.inference_mode():
                     outputs = self.model.generate(
                         padded_inputs,
-                        attention_mask=attention_mask,
+                        #attention_mask=attention_mask,
                         do_sample=True,
                         temperature=0.3,
                         min_p=0.15,
-                        repetition_penalty=1.05,
-                        max_new_tokens=256,
+                        repetition_penalty=1.5,
+                        max_new_tokens=128,
                         pad_token_id=self.tokenizer.pad_token_id,
                     )
 
                 # Decode batch outputs
                 for output in outputs:
                     decoded_output = self.tokenizer.decode(output, skip_special_tokens=True)
-                    cleansed_output = decoded_output.split('assistant')[-1].replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
+                    cleansed_output = decoded_output.split('</think>')[-1].replace('"','').replace('\n',' ').replace('(',' ').replace(')',' ').replace('_', ' ').strip()
                     print(cleansed_output)
                     all_results.append(cleansed_output)
 
