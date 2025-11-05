@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class MemoryEfficientLoader:
     """Memory-efficient data loader using chunking and streaming"""
 
-    def __init__(self, csv_files: List[str]):
+    def __init__(self, csv_files: List[str], data_dir:str):
         """
         Initialize the memory-efficient loader
 
@@ -25,6 +25,7 @@ class MemoryEfficientLoader:
             date_list: List of dates for CSV files
         """
         self.csv_files = csv_files
+        self.data_dir = data_dir
         self.total_rows = 0
 
     def iter_chunks(self, columns:list=None) -> Iterator[pd.DataFrame]:
@@ -41,7 +42,7 @@ class MemoryEfficientLoader:
             logger.info(f"Processing date: {f}")
 
             try:
-                csv_file = Path(f"./news_data_by_date/{f}.csv")
+                csv_file = Path(f"{self.data_dir}/{f}.csv")
                 if not csv_file.exists():
                     logger.warning(f"File not found: {csv_file}")
                     continue
