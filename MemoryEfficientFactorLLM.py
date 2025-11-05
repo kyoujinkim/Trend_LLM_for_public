@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class MemoryEfficientFactorLLM:
     """Memory-efficient version of FACTOR-LLM for large datasets"""
 
-    def __init__(self, use_llm: bool = False, chunk_size: int = None):
+    def __init__(self, use_llm: bool = False, chunk_size: int = None, mecab_path: str = None):
         """
         Initialize Memory-Efficient FACTOR-LLM
 
@@ -61,7 +61,7 @@ class MemoryEfficientFactorLLM:
 
         self.loader = MemoryEfficientLoader(config.CSVS)
         self.processor = ChunkedDataProcessor(self.loader)
-        self.preprocessor = TextPreprocessor()
+        self.preprocessor = TextPreprocessor(mecab_path)
 
         self.keyword_extractor = KeywordExtractor(
             top_n=config.TOP_N_KEYWORDS,
