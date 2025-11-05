@@ -1,0 +1,396 @@
+"""
+Report Generator Module
+Generates comprehensive reports with predictions and visualizations
+"""
+import logging
+from typing import Dict, List
+from datetime import datetime
+from pathlib import Path
+import pandas as pd
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class ReportGenerator:
+    """Generate comprehensive analysis reports"""
+
+    def __init__(self, output_dir: Path):
+        """
+        Initialize report generator
+
+        Args:
+            output_dir: Directory to save reports
+        """
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(exist_ok=True)
+
+    def generate_markdown_report(self, data: Dict, filename: str = None) -> str:
+        """
+        Generate markdown report
+
+        Args:
+            data: Dictionary containing all analysis results
+            filename: Output filename (auto-generated if None)
+
+        Returns:
+            Path to generated report
+        """
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"FACTOR-LLM_Report_{timestamp}.md"
+
+        report_path = self.output_dir / filename
+
+        # Generate report content
+        content = self._build_markdown_content(data)
+
+        # Write to file
+        with open(report_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        logger.info(f"Report saved to: {report_path}")
+        return str(report_path)
+
+    def _build_markdown_content(self, data: Dict) -> str:
+        """
+        Build markdown content
+
+        Args:
+            data: Analysis data
+
+        Returns:
+            Markdown formatted string
+        """
+        sections = []
+
+        # Header
+        sections.append(self._generate_header())
+
+        # Executive Summary
+        sections.append(self._generate_executive_summary(data))
+
+        # Data Overview
+        sections.append(self._generate_data_overview(data))
+
+        # Top Keywords
+        sections.append(self._generate_top_keywords_section(data))
+
+        # Emerging Keywords
+        sections.append(self._generate_emerging_keywords_section(data))
+
+        # Declining Keywords
+        sections.append(self._generate_declining_keywords_section(data))
+
+        # High Risk Keywords
+        sections.append(self._generate_high_risk_section(data))
+
+        # Detailed Analysis
+        sections.append(self._generate_detailed_analysis_section(data))
+
+        # Overall Analysis
+        if 'overall_analysis' in data:
+            sections.append(self._generate_overall_analysis_section(data))
+
+        # Methodology
+        sections.append(self._generate_methodology_section())
+
+        # Footer
+        sections.append(self._generate_footer())
+
+        return '\n\n'.join(sections)
+
+    def _generate_header(self) -> str:
+        """Generate report header"""
+        return f"""# FACTOR-LLM Analysis Report
+## Factor Analysis and Cyclical Trend Observation using LLMs
+
+**Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+---"""
+
+    def _generate_executive_summary(self, data: Dict) -> str:
+        """Generate executive summary"""
+        stats = data.get('statistics', {})
+        top_keywords = data.get('top_keywords', [])
+        emerging = data.get('emerging_keywords', [])
+        declining = data.get('declining_keywords', [])
+
+        top_3 = [kw.get('keyword', '') for kw in top_keywords[:3]]
+
+        summary = f"""## Executive Summary
+
+이 보고서는 {stats.get('total_articles', 0):,}개의 뉴스 기사를 분석하여 산업 트렌드와 키워드 라이프사이클을 예측합니다.
+
+### 주요 발견사항
+
+- **분석 기간**: {stats.get('date_range', {}).get('start', 'N/A')} ~ {stats.get('date_range', {}).get('end', 'N/A')}
+- **총 분석 기사 수**: {stats.get('total_articles', 0):,}개
+- **주요 키워드**: {', '.join(top_3)}
+- **신규 부상 키워드**: {len(emerging)}개
+- **쇠퇴 중인 키워드**: {len(declining)}개
+"""
+        return summary
+
+    def _generate_data_overview(self, data: Dict) -> str:
+        """Generate data overview section"""
+        stats = data.get('statistics', {})
+
+        return f"""## 데이터 개요
+
+- **총 기사 수**: {stats.get('total_articles', 0):,}
+- **분석 일자 수**: {stats.get('unique_dates', 0)}일
+- **데이터 소스 수**: {stats.get('unique_sources', 0)}
+- **추출된 키워드 수**: {len(data.get('top_keywords', []))}
+"""
+
+    def _generate_top_keywords_section(self, data: Dict) -> str:
+        """Generate top keywords section"""
+        top_keywords = data.get('top_keywords', [])[:20]
+
+        if not top_keywords:
+            return "## 주요 키워드\n\n데이터 없음"
+
+        content = ["## 주요 키워드\n"]
+        content.append("현재 가장 주도적인 키워드들입니다.\n")
+        content.append("| 순위 | 키워드 | 출현 빈도 | 트렌드 | 라이프사이클 | 1년 소멸 확률 |")
+        content.append("|------|--------|-----------|--------|--------------|---------------|")
+
+        for idx, kw in enumerate(top_keywords, 1):
+            keyword = kw.get('keyword', '')
+            freq = kw.get('total_occurrences', 0)
+            trend = kw.get('trend', 'N/A')
+            lifecycle = kw.get('lifecycle_stage', 'N/A')
+            extinction_prob = kw.get('extinction_prob_365_days', 0) * 100
+
+            # Translate trend to Korean
+            trend_kr = {
+                'increasing': '상승',
+                'decreasing': '하락',
+                'stable': '안정',
+                'no_significant_trend': '불명확'
+            }.get(trend, trend)
+
+            # Translate lifecycle to Korean
+            lifecycle_kr = {
+                'introduction': '도입기',
+                'growth': '성장기',
+                'maturity': '성숙기',
+                'decline': '쇠퇴기',
+                'obsolescence': '소멸기',
+                'uncertain': '불명확'
+            }.get(lifecycle, lifecycle)
+
+            content.append(
+                f"| {idx} | {keyword} | {freq} | {trend_kr} | {lifecycle_kr} | {extinction_prob:.1f}% |"
+            )
+
+        return '\n'.join(content)
+
+    def _generate_emerging_keywords_section(self, data: Dict) -> str:
+        """Generate emerging keywords section"""
+        emerging_data = data.get('emerging_keywords_detail', [])
+
+        if not emerging_data:
+            return "## 신규 부상 키워드\n\n현재 특별히 부상하는 키워드가 관찰되지 않았습니다."
+
+        content = ["## 신규 부상 키워드\n"]
+        content.append("새롭게 주목받고 있는 키워드들입니다.\n")
+        content.append("| 키워드 | 현재 빈도 | 트렌드 기울기 | 해석 |")
+        content.append("|--------|-----------|---------------|------|")
+
+        for kw_data in emerging_data[:10]:
+            keyword = kw_data.get('keyword', '')
+            freq = kw_data.get('current_frequency', 0)
+            slope = kw_data.get('trend_slope', 0)
+            interp = kw_data.get('interpretation', '').replace('\n', ' ')[:100]
+
+            content.append(
+                f"| {keyword} | {freq:.1f} | {slope:.4f} | {interp}... |"
+            )
+
+        return '\n'.join(content)
+
+    def _generate_declining_keywords_section(self, data: Dict) -> str:
+        """Generate declining keywords section"""
+        declining_data = data.get('declining_keywords_detail', [])
+
+        if not declining_data:
+            return "## 쇠퇴 중인 키워드\n\n현재 특별히 쇠퇴하는 키워드가 관찰되지 않았습니다."
+
+        content = ["## 쇠퇴 중인 키워드\n"]
+        content.append("관심이 감소하고 있는 키워드들입니다.\n")
+        content.append("| 키워드 | 현재 빈도 | 트렌드 기울기 | 잔여 기간(일) |")
+        content.append("|--------|-----------|---------------|---------------|")
+
+        for kw_data in declining_data[:10]:
+            keyword = kw_data.get('keyword', '')
+            freq = kw_data.get('current_frequency', 0)
+            slope = kw_data.get('trend_slope', 0)
+            days = kw_data.get('days_remaining_estimate', 'N/A')
+            days_str = f"{days}" if days != 'N/A' and days is not None else 'N/A'
+
+            content.append(
+                f"| {keyword} | {freq:.1f} | {slope:.4f} | {days_str} |"
+            )
+
+        return '\n'.join(content)
+
+    def _generate_high_risk_section(self, data: Dict) -> str:
+        """Generate high risk keywords section"""
+        high_risk = data.get('high_risk_keywords', [])
+
+        if not high_risk:
+            return "## 고위험 키워드\n\n1년 내 소멸 확률이 높은 키워드가 관찰되지 않았습니다."
+
+        content = ["## 고위험 키워드 (높은 소멸 확률)\n"]
+        content.append("1년 내 소멸 확률이 60% 이상인 키워드들입니다.\n")
+        content.append("| 키워드 | 1년 소멸 확률 | 현재 빈도 | 예측 근거 |")
+        content.append("|--------|---------------|-----------|-----------|")
+
+        for kw_data in high_risk[:10]:
+            keyword = kw_data.get('keyword', '')
+            prob = kw_data.get('extinction_prob_365_days', 0) * 100
+            freq = kw_data.get('current_frequency', 0)
+            rationale = kw_data.get('rationale', '').replace('\n', ' ')[:80]
+
+            content.append(
+                f"| {keyword} | {prob:.1f}% | {freq:.1f} | {rationale}... |"
+            )
+
+        return '\n'.join(content)
+
+    def _generate_detailed_analysis_section(self, data: Dict) -> str:
+        """Generate detailed analysis for selected keywords"""
+        top_keywords = data.get('top_keywords', [])[:5]
+
+        if not top_keywords:
+            return ""
+
+        content = ["## 주요 키워드 상세 분석\n"]
+
+        for kw in top_keywords:
+            keyword = kw.get('keyword', '')
+            interp = kw.get('interpretation', '해석 없음')
+            rationale = kw.get('rationale', '근거 없음')
+
+            content.append(f"### {keyword}\n")
+            content.append(f"**해석**: {interp}\n")
+            content.append(f"**예측 근거**:\n```\n{rationale}\n```\n")
+
+        return '\n'.join(content)
+
+    def _generate_overall_analysis_section(self, data: Dict) -> str:
+        """Generate overall analysis section"""
+        overall = data.get('overall_analysis', '')
+
+        if not overall:
+            return ""
+
+        return f"""## 종합 분석
+
+{overall}
+"""
+
+    def _generate_methodology_section(self) -> str:
+        """Generate methodology section"""
+        return """## 방법론
+
+### 데이터 처리
+1. CSV 형식의 뉴스 데이터 로드
+2. HTML 태그 제거 및 텍스트 정제
+3. 한국어 형태소 분석 (Mecab)을 통한 명사 추출
+
+### 키워드 추출
+- TF-IDF 알고리즘을 사용한 중요 키워드 추출
+- 날짜별 키워드 빈도 추적
+
+### 시계열 분석
+- 이동평균을 통한 트렌드 평활화
+- 선형 회귀를 통한 트렌드 방향 감지
+- FFT를 이용한 주기적 패턴 감지
+
+### 예측 모델
+- 지수 감쇠 모델을 기반으로 한 미래 빈도 예측
+- 정규분포 가정 하의 소멸 확률 계산
+- 트렌드와 변동성을 고려한 확률 조정
+
+### LLM 통합
+- Claude/GPT를 활용한 해석 가능한 분석 생성
+- 데이터 패턴에 대한 맥락적 이해 제공
+
+### 신뢰도
+- 데이터 양과 품질에 따라 high/medium/low로 분류
+- 통계적 유의성 검증 (p-value < 0.05)
+"""
+
+    def _generate_footer(self) -> str:
+        """Generate report footer"""
+        return """---
+
+**FACTOR-LLM**
+*Factor Analysis and Cyclical Trend Observation using LLMs*
+
+본 보고서는 자동 생성되었으며, 참고 목적으로만 사용되어야 합니다.
+"""
+
+    def save_data_to_csv(self, df: pd.DataFrame, filename: str) -> str:
+        """
+        Save DataFrame to CSV
+
+        Args:
+            df: DataFrame to save
+            filename: Output filename
+
+        Returns:
+            Path to saved file
+        """
+        output_path = self.output_dir / filename
+
+        df.to_csv(output_path, index=False, encoding='utf-8-sig')
+
+        logger.info(f"Data saved to: {output_path}")
+        return str(output_path)
+
+    def generate_summary_json(self, data: Dict, filename: str = None) -> str:
+        """
+        Generate JSON summary
+
+        Args:
+            data: Analysis data
+            filename: Output filename
+
+        Returns:
+            Path to JSON file
+        """
+        import json
+
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"summary_{timestamp}.json"
+
+        output_path = self.output_dir / filename
+
+        # Prepare JSON-serializable data
+        json_data = {
+            'generated_at': datetime.now().isoformat(),
+            'statistics': data.get('statistics', {}),
+            'top_keywords': [
+                {
+                    'keyword': kw.get('keyword', ''),
+                    'frequency': int(kw.get('total_occurrences', 0)),
+                    'trend': kw.get('trend', ''),
+                    'lifecycle': kw.get('lifecycle_stage', ''),
+                    'extinction_prob_1year': float(kw.get('extinction_prob_365_days', 0))
+                }
+                for kw in data.get('top_keywords', [])[:20]
+            ],
+            'emerging_keywords': data.get('emerging_keywords', []),
+            'declining_keywords': data.get('declining_keywords', [])
+        }
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+        logger.info(f"JSON summary saved to: {output_path}")
+        return str(output_path)
