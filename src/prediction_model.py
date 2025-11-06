@@ -275,7 +275,11 @@ class KeywordLifecyclePredictor:
         Returns:
             DataFrame with high-risk keywords
         """
-        high_risk = pred_df[pred_df['extinction_prob_365_days'] >= threshold].copy()
+        high_risk = pred_df[
+            (pred_df['extinction_prob_365_days'] >= threshold) &
+            (pred_df['lifecycle_stage'].isin(['decline', 'obsolescence'])) &
+            (pred_df['trend'].isin(['decreasing']))
+        ].copy()
         high_risk = high_risk.sort_values('extinction_prob_365_days', ascending=False)
 
         logger.info(f"Found {len(high_risk)} high-risk keywords")
@@ -293,7 +297,8 @@ class KeywordLifecyclePredictor:
         """
         emerging = pred_df[
             (pred_df['lifecycle_stage'].isin(['introduction', 'growth'])) &
-            (pred_df['trend'] == 'increasing')
+            (pred_df['trend'] == 'increasing') &
+            (pred_df['extinction_prob_365_days'] < 0.9)
         ].copy()
 
         emerging = emerging.sort_values('current_frequency', ascending=False)

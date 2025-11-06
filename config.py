@@ -35,14 +35,18 @@ PREDICTION_HORIZON_DAYS = 365  # 1 year prediction
 CONFIDENCE_LEVEL = 0.95
 
 # LLM Settings
-LLM_PROVIDER = "anthropic"  # or "openai"
-LLM_MODEL = "claude-3-5-sonnet-20241022"
+LLM_PROVIDER = "openai"  # or "openai"
+LLM_MODEL = "gpt-5-mini-2025-08-07"
 LLM_TEMPERATURE = 0.7
 LLM_MAX_TOKENS = 4000
 
-# API Keys (load from environment)
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# API Keys (load from D:\config.ini)
+import configparser
+config = configparser.ConfigParser()
+config.read('D:/config.ini')
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+OPENAI_API_KEY = config.get('openai', 'API_KEY')
 
 # Report Settings
 REPORT_FORMAT = "markdown"  # or "html", "pdf"

@@ -4,6 +4,7 @@ Integrates LLM for interpretable analysis and reasoning
 """
 import logging
 from typing import Dict, List
+from pydantic import BaseModel
 import json
 
 logging.basicConfig(level=logging.INFO)
@@ -51,50 +52,41 @@ class LLMAnalyzer:
         except Exception as e:
             logger.error(f"Failed to initialize LLM client: {e}")
 
-    def generate_keyword_interpretation(self, keyword: str,
-                                       analysis: Dict,
-                                       prediction: Dict) -> str:
+    def generate_keyword_interpretation(self, input_dict: Dict) -> str:
         """
         Generate interpretation for a single keyword
 
         Args:
-            keyword: Keyword name
-            analysis: Analysis results
-            prediction: Prediction results
+            input_dict: Dictionary with 'keyword' keys and 'analysis', and 'prediction' items
 
         Returns:
             Interpretation text
         """
-        if not self.client:
-            return self._generate_rule_based_interpretation(keyword, analysis, prediction)
+        prompt = f"""주어진 데이터는 각 키워드에 대한 정보를 담은 Dict 데이터입니다.
+        키워드에 대한 분석 결과를 바탕으로 해석과 통찰을 제공해주세요.
 
-        prompt = f"""다음 키워드에 대한 분석 결과를 바탕으로 해석과 통찰을 제공해주세요.
+        데이터 : {json.dumps(input_dict, ensure_ascii=False)}
 
-키워드: {keyword}
-
-분석 결과:
-- 트렌드: {analysis.get('trend', 'N/A')}
-- 평균 빈도: {analysis.get('mean_frequency', 0):.2f}
-- 변동성: {analysis.get('volatility', 0):.2f}
-- 총 출현 횟수: {analysis.get('total_occurrences', 0)}
-
-예측 결과:
-- 라이프사이클 단계: {prediction.get('lifecycle_stage', 'N/A')}
-- 1년 내 소멸 확률: {prediction.get('extinction_prob_365_days', 0) * 100:.1f}%
-- 예상 잔여 기간: {prediction.get('days_remaining_estimate', 'N/A')} 일
-
-다음 내용을 포함하여 2-3문장으로 해석을 작성해주세요:
-1. 현재 키워드의 상태와 의미
-2. 관찰된 패턴의 원인 또는 배경
-3. 향후 전망과 시사점
-
-한국어로 작성해주세요."""
+        데이터 구성:
+        - 트렌드: trend
+        - 평균 빈도: mean_frequency
+        - 변동성: volatility
+        - 총 출현 횟수: total_occurrences
+        - 라이프사이클 단계: lifecycle_stage
+        - 1년 내 소멸 확률: extinction_prob_365_days
+ 
+        분석 결과 양식:
+        다음 내용을 포함하여 2-3문장으로 해석을 작성해주세요:
+        1. 현재 키워드의 상태와 의미
+        2. 관찰된 패턴의 원인 또는 배경
+        3. 향후 전망과 시사점
+        
+        한국어로 작성해주세요."""
 
         try:
             if self.provider == "anthropic":
                 response = self.client.messages.create(
                     model=self.model,
-                    max_tokens=500,
                     messages=[{"role": "user", "content": prompt}]
                 )
                 return response.content[0].text
@@ -102,12 +94,10 @@ class LLMAnalyzer:
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
-                    max_tokens=500
                 )
                 return response.choices[0].message.content
         except Exception as e:
-            logger.error(f"LLM interpretation failed: {e}")
-            return self._generate_rule_based_interpretation(keyword, analysis, prediction)
+            return f"LLM interpretation failed: {e}"
 
     def _generate_rule_based_interpretation(self, keyword: str,
                                            analysis: Dict,
@@ -158,69 +148,51 @@ class LLMAnalyzer:
 
         return ' '.join(interpretations)
 
-    def generate_overall_analysis(self, top_keywords: List[Dict],
-                                 emerging_keywords: List[str],
-                                 declining_keywords: List[str]) -> str:
+    def generate_overall_analysis(self, interpretation, news) -> str:
         """
         Generate overall market/trend analysis
 
         Args:
-            top_keywords: List of top keyword analyses
-            emerging_keywords: List of emerging keywords
-            declining_keywords: List of declining keywords
+            interpretation: List of top keyword interpretations
+            news: Comprehensive views on which industries are related with keywords based on news articles
 
         Returns:
             Overall analysis text
         """
-        if not self.client:
-            return self._generate_rule_based_overall_analysis(
-                top_keywords, emerging_keywords, declining_keywords
-            )
+        class KeywordInterpret(BaseModel):
+            keyword: str
+            interpretation: str
+        class IndustryTrend(BaseModel):
+            industry: str
+            keywords: List[KeywordInterpret]
+        class OutputFormat(BaseModel):
+            trend_industry: List[IndustryTrend]
+            rising_industry: List[IndustryTrend]
 
-        # Prepare summary data
-        top_kw_names = [kw.get('keyword', '') for kw in top_keywords[:10]]
-        emerging_str = ', '.join(emerging_keywords[:5]) if emerging_keywords else '없음'
-        declining_str = ', '.join(declining_keywords[:5]) if declining_keywords else '없음'
-
-        prompt = f"""다음 뉴스 데이터 분석 결과를 바탕으로 전반적인 트렌드 분석을 제공해주세요.
-
-주요 키워드 (상위 10개):
-{', '.join(top_kw_names)}
-
-신규 부상 키워드:
-{emerging_str}
-
-쇠퇴 중인 키워드:
-{declining_str}
-
-다음 내용을 포함하여 종합 분석을 작성해주세요:
-1. 현재 주요 트렌드와 산업 동향
-2. 신규 부상 키워드가 의미하는 변화
-3. 쇠퇴하는 키워드와 그 의미
-4. 향후 전망과 시사점
-
-한국어로 4-5문단으로 작성해주세요."""
-
+        prompt = f"""다음은 키워드 분석과 관련 뉴스 데이터를 바탕으로 전체 시장 및 트렌드에 대한 종합적인 분석입니다.
+        키워드 해석: {interpretation}
+        관련 뉴스: {news}
+        
+        위 정보를 바탕으로 어떤 산업(반도체, 화학, 2차전지 등 주식 연관)에 유효한 트렌드가 형성되고 있는지, 주요 트렌드, 신규 부상 트렌드, 향후 전망 등을 포함하여 종합적인 분석을 작성해주세요.
+        각 분류별로 산업은 GICS 산업 분류(산업명(코드))로 3개씩 제시해주세요.
+        한국어로 작성해주세요."""
         try:
             if self.provider == "anthropic":
                 response = self.client.messages.create(
                     model=self.model,
-                    max_tokens=1500,
                     messages=[{"role": "user", "content": prompt}]
                 )
                 return response.content[0].text
             elif self.provider == "openai":
-                response = self.client.chat.completions.create(
+                response = self.client.responses.parse(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=1500
+                    input=[{"role": "user", "content": prompt}],
+                    text_format=OutputFormat
                 )
-                return response.choices[0].message.content
+                return response.output_parsed
         except Exception as e:
-            logger.error(f"LLM overall analysis failed: {e}")
-            return self._generate_rule_based_overall_analysis(
-                top_keywords, emerging_keywords, declining_keywords
-            )
+            return f"LLM overall analysis failed: {e}"
+
 
     def _generate_rule_based_overall_analysis(self, top_keywords: List[Dict],
                                              emerging_keywords: List[str],
@@ -311,3 +283,40 @@ class LLMAnalyzer:
         rationale_parts.append(f"- 예측 신뢰도: {confidence}")
 
         return '\n'.join(rationale_parts)
+
+    def fetch_relevant_news(self, keywords: list[str], target_date: str) -> List[Dict]:
+        """
+        Fetch relevant news articles for a keyword
+
+        Args:
+            keywords: Keywords list to search
+            target_date: Date string in 'YYYYMMDD' format
+        Returns:
+            Comprehensive view on which industries are related with keywords based on news articles
+        """
+        if not self.client:
+            logger.warning("LLM client not initialized. Cannot fetch relevant news.")
+            return []
+
+        prompt = f"""다음 키워드와 날짜에 대한 관련 뉴스 기사를 통해 각각의 키워드와 어떤 산업(반도체, 2차전지 등)이 연관이 있는지 연관 산업을 제시해주세요.
+                    키워드: {', '.join(keywords)}
+                    날짜: {target_date}"""
+        try:
+            if self.provider == "anthropic":
+                response = self.client.messages.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+            elif self.provider == "openai":
+                response = self.client.responses.create(
+                    model=self.model,
+                    tools=[{"type": "web_search"}],
+                    input=prompt
+                )
+
+            news_articles = response.output_text
+        except:
+            news_articles = ''
+
+        return news_articles
+

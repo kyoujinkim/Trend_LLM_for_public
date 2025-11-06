@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy import signal
 from scipy.stats import linregress
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -248,8 +249,8 @@ class TimeSeriesAnalyzer:
         analysis['volatility'] = self.calculate_volatility(series)
 
         # Peaks and troughs
-        peaks_troughs = self.identify_peaks_and_troughs(series)
-        analysis.update(peaks_troughs)
+        #peaks_troughs = self.identify_peaks_and_troughs(series)
+        #analysis.update(peaks_troughs)
 
         return analysis
 
@@ -267,7 +268,7 @@ class TimeSeriesAnalyzer:
 
         logger.info(f"Analyzing {len(freq_df.columns)} keywords...")
 
-        for keyword in freq_df.columns:
+        for keyword in tqdm(freq_df.columns):
             series = freq_df[keyword]
             analysis = self.analyze_keyword_series(series, keyword)
             results.append(analysis)
