@@ -148,7 +148,7 @@ class LLMAnalyzer:
 
         return ' '.join(interpretations)
 
-    def generate_overall_analysis(self, interpretation, news) -> str:
+    def generate_overall_analysis(self, interpretation, news):
         """
         Generate overall market/trend analysis
 

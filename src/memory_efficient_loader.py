@@ -8,7 +8,6 @@ from typing import List, Dict, Iterator, Optional
 from tqdm import tqdm
 import logging
 import gc
-import jaydebeapi
 import json
 
 logging.basicConfig(level=logging.INFO)
