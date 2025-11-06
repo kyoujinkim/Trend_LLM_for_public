@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9d10620b-b386-436a-a080-6f34f624a2ae" name="Changes" comment="data changed">
-      <change afterPath="$PROJECT_DIR$/src/report_generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MemoryEfficientFactorLLM.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoryEfficientFactorLLM.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/llm_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/llm_analyzer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/prediction_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/prediction_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/report_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/time_series_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/time_series_analyzer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,7 +44,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.MemoryEfficientFactorLLM (1).executor": "Debug",
+    "Python.MemoryEfficientFactorLLM (1).executor": "Run",
     "Python.main_memory_efficient.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -49,7 +55,7 @@
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.MemoryEfficientFactorLLM">
+  <component name="RunManager" selected="Python.MemoryEfficientFactorLLM (1)">
     <configuration name="MemoryEfficientFactorLLM (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="AI_Reporter" />
       <option name="ENV_FILES" value="" />
@@ -156,15 +162,7 @@
       <option name="project" value="LOCAL" />
       <updated>1762330887244</updated>
     </task>
-    <task id="LOCAL-00006" summary="data changed">
-      <option name="closed" value="true" />
-      <created>1762400298549</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1762400298549</updated>
-    </task>
-    <option name="localTasksCounter" value="7" />
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -186,29 +184,74 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/llm_analyzer.py</url>
-          <line>85</line>
-          <option name="timeStamp" value="66" />
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>120</line>
+          <option name="timeStamp" value="86" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/llm_analyzer.py</url>
-          <line>316</line>
-          <option name="timeStamp" value="69" />
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>401</line>
+          <option name="timeStamp" value="90" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/llm_analyzer.py</url>
-          <line>171</line>
-          <option name="timeStamp" value="70" />
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>378</line>
+          <option name="timeStamp" value="91" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/llm_analyzer.py</url>
-          <line>64</line>
-          <option name="timeStamp" value="71" />
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>220</line>
+          <option name="timeStamp" value="92" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/llm_analyzer.py</url>
-          <line>300</line>
-          <option name="timeStamp" value="72" />
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>148</line>
+          <option name="timeStamp" value="93" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>154</line>
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>169</line>
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>190</line>
+          <option name="timeStamp" value="96" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>221</line>
+          <option name="timeStamp" value="97" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>232</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>136</line>
+          <option name="timeStamp" value="115" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>138</line>
+          <option name="timeStamp" value="116" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>197</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/report_generator.py</url>
+          <line>209</line>
+          <option name="timeStamp" value="118" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -216,6 +259,8 @@
       <configuration name="PythonConfigurationType">
         <watch expression="output" />
         <watch expression="keywords[3]" />
+        <watch expression="news" />
+        <watch expression="self.llm_analyzer" />
       </configuration>
     </watches-manager>
   </component>

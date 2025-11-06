@@ -124,7 +124,6 @@ class MemoryEfficientFactorLLM:
         logger.info("Memory-Efficient FACTOR-LLM Analysis from Pre-Extracted Data Started")
         logger.info(f"Processing Mode: {config.PROCESSING_MODE}")
         logger.info("=" * 80)
-        target_date = '20251101'
 
         # Step 1: Load keyword frequency data
         logger.info("\n[1/5] Loading keyword frequency data...")
@@ -153,17 +152,16 @@ class MemoryEfficientFactorLLM:
         logger.info("\n[4/5] Generating predictions...")
         predictions_df = self.predictor.predict_all_keywords(freq_df, analysis_df)
 
-        emerging_keywords = self.predictor.get_emerging_keywords(predictions_df)
-        logger.info(f"Emerging keywords: {len(emerging_keywords)}")
+        keywords = self.predictor.get_keywords(predictions_df)
+        logger.info(f"Keywords: {len(keywords)}")\
 
         self.memory_monitor.check_memory("After predictions")
 
         # Step 7: Generate interpretations (process top keywords only to save memory)
         logger.info("\n[7/7] Generating interpretations...")
-        top_n_for_interpretation = 20  # Limit to reduce memory and API calls
 
         interpretations = self._generate_interpretations_selective(
-            emerging_keywords.nlargest(top_n_for_interpretation, 'current_frequency'),
+            keywords.nlargest(30, 'current_frequency'),
             analysis_df,
             target_date
         )
@@ -176,7 +174,6 @@ class MemoryEfficientFactorLLM:
             freq_df=freq_df,
             analysis_df=analysis_df,
             predictions_df=predictions_df,
-            emerging_keywords=emerging_keywords,
             interpretations=interpretations
         )
 
@@ -306,7 +303,7 @@ class MemoryEfficientFactorLLM:
         logger.info(f"Frequency matrix shape: {df.shape}")
         return df
 
-    def _generate_interpretations_selective(self, predictions_df, analysis_df, target_date):
+    def _generate_interpretations_selective(self, keywords_df, analysis_df, target_date):
         """Generate interpretations for selected keywords only"""
         interpretations = {}
 
@@ -314,9 +311,10 @@ class MemoryEfficientFactorLLM:
 
         # LLM-based interpretations
         # To minimize API calls, bind all data in one go
+        # combine emerging and declining
         input_dict = {}
-        for _, pred_row in tqdm(predictions_df.iterrows(),
-                               total=len(predictions_df),
+        for _, pred_row in tqdm(keywords_df.iterrows(),
+                               total=len(keywords_df),
                                desc="LLM interpretations"):
             keyword = pred_row['keyword']
 
@@ -351,8 +349,7 @@ class MemoryEfficientFactorLLM:
 
         return interpretations
 
-    def _prepare_report_data(self, freq_df, analysis_df, predictions_df,
-                            emerging_keywords, interpretations):
+    def _prepare_report_data(self, freq_df, analysis_df, predictions_df, interpretations):
         """
         Prepare comprehensive data for report generation
 
@@ -360,7 +357,6 @@ class MemoryEfficientFactorLLM:
             freq_df: Frequency DataFrame with date index and keyword columns
             analysis_df: Analysis results DataFrame
             predictions_df: Predictions DataFrame
-            emerging_keywords: DataFrame of emerging keywords
             interpretations: Dictionary with 'overall', 'interpretations', 'news'
 
         Returns:
@@ -380,61 +376,41 @@ class MemoryEfficientFactorLLM:
         }
 
         # 2. TOP KEYWORDS - Merge analysis and predictions
-        top_keywords = []
-        for _, pred_row in predictions_df.head(50).iterrows():
-            keyword = pred_row['keyword']
-            analysis = analysis_df[analysis_df['keyword'] == keyword]
-
-            if len(analysis) == 0:
-                continue
-
-            analysis_dict = analysis.iloc[0].to_dict()
-
-            kw_data = {
-                **analysis_dict,
-                **pred_row.to_dict(),
-                'interpretation': '',
-                'rationale': ''
-            }
-            top_keywords.append(kw_data)
+        # get dominant_keywords from interpretations
+        try:
+            dominant_keywords = interpretations.get('interpretations', {}).dominant_keyword_list
+        except:
+            dominant_keywords = []
 
         # 3. EMERGING KEYWORDS
-        emerging_list = emerging_keywords['keyword'].tolist() if len(emerging_keywords) > 0 else []
-        emerging_detail = emerging_keywords.head(20).to_dict('records') if len(emerging_keywords) > 0 else []
+        try:
+            rising_keywords = interpretations.get('interpretations', {}).rising_keyword_list
+        except:
+            rising_keywords = []
 
         # 4. DECLINING KEYWORDS - Extract from predictions_df
-        declining_keywords_df = predictions_df[
-            (predictions_df['trend'] == 'decreasing') |
-            (predictions_df['lifecycle_stage'].isin(['decline', 'obsolescence']))
-        ].head(10)
+        try:
+            declining_keywords = interpretations.get('interpretations', {}).declining_keyword_list
+        except:
+            declining_keywords = []
 
-        declining_list = declining_keywords_df['keyword'].tolist() if len(declining_keywords_df) > 0 else []
-        declining_detail = []
-
-        for _, row in declining_keywords_df.iterrows():
-            keyword = row['keyword']
-            analysis = analysis_df[analysis_df['keyword'] == keyword]
-
-            declining_detail.append({
-                'keyword': keyword,
-                'current_frequency': row.get('current_frequency', 0),
-                'trend_slope': analysis.iloc[0]['trend_slope'] if len(analysis) > 0 else 0,
-                'days_remaining_estimate': row.get('days_remaining_estimate', 'N/A')
-            })
-
-        # 5. HIGH RISK KEYWORDS - Extract from predictions_df
-        high_risk_df = predictions_df[
-            predictions_df['extinction_prob_365_days'] > 0.6
-        ].head(10)
-
-        high_risk_detail = []
-        for _, row in high_risk_df.iterrows():
-            high_risk_detail.append({
-                'keyword': row['keyword'],
-                'extinction_prob_365_days': row.get('extinction_prob_365_days', 0),
-                'current_frequency': row.get('current_frequency', 0),
-                'rationale': ''
-            })
+        # 5. Combine all keywords(dominant_keywords, rising_keywords, declining_keywords) and data(analysis_df, predictions_df)
+        key_list = []
+        for kw in declining_keywords:
+            kw_word = kw.keyword
+            kw_interpret = kw.interpretation
+            key_list.append(['declining', kw_word, kw_interpret])
+        for kw in rising_keywords:
+            kw_word = kw.keyword
+            kw_interpret = kw.interpretation
+            key_list.append(['rising', kw_word, kw_interpret])
+        for kw in dominant_keywords:
+            kw_word = kw.keyword
+            kw_interpret = kw.interpretation
+            key_list.append(['dominant', kw_word, kw_interpret])
+        key_df = pd.DataFrame(key_list, columns=['status', 'keyword', 'interpretation'])
+        merged_data = pd.merge(key_df, analysis_df, on='keyword', how='left')
+        merged_data = pd.merge(merged_data, predictions_df, on='keyword', how='left')
 
         # 6. OVERALL ANALYSIS - Industry trends
         overall_analysis = interpretations.get('overall', '')
@@ -442,18 +418,12 @@ class MemoryEfficientFactorLLM:
         # Assemble final report data
         report_data = {
             'statistics': statistics,
-            'top_keywords': top_keywords,
-            'emerging_keywords': emerging_list,
-            'emerging_keywords_detail': emerging_detail,
-            'declining_keywords': declining_list,
-            'declining_keywords_detail': declining_detail,
-            'high_risk_keywords': high_risk_detail,
+            'keywords_data': merged_data,
             'overall_analysis': overall_analysis
         }
 
-        logger.info(f"Report data prepared: {len(top_keywords)} top keywords, "
-                   f"{len(emerging_list)} emerging, {len(declining_list)} declining, "
-                   f"{len(high_risk_detail)} high-risk")
+        logger.info(f"Report data prepared: {len(dominant_keywords)} top keywords, "
+                   f"{len(rising_keywords)} emerging, {len(declining_keywords)} declining")
 
         return report_data
 
@@ -501,16 +471,19 @@ def main():
     config.PROCESSING_MODE = args.mode
 
     # Initialize and run
-    app = MemoryEfficientFactorLLM(use_llm=args.use_llm, chunk_size=args.chunk_size)
+    app = MemoryEfficientFactorLLM(use_llm=args.use_llm, chunk_size=args.chunk_size, huggingface_model=None)
 
-    try:
-        report_path = app.run_only_anlaysis()
-        print(f"\n✓ Analysis complete! Report saved to: {report_path}")
-        return 0
-    except Exception as e:
-        logger.error(f"Error during analysis: {e}", exc_info=True)
-        print(f"\n✗ Error: {e}")
-        return 1
+    for target_date in ['20251130', '20250131', '20250331', '20250531', '20250731', '20250930', '20251104']:
+        logger.info(f"\nRunning analysis for target date: {target_date}")
+
+        try:
+            report_path = app.run_only_anlaysis(target_date)
+            print(f"\n✓ Analysis complete! Report saved to: {report_path}")
+            return 0
+        except Exception as e:
+            logger.error(f"Error during analysis: {e}", exc_info=True)
+            print(f"\n✗ Error: {e}")
+            return 1
 
 
 if __name__ == "__main__":

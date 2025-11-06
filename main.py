@@ -122,7 +122,7 @@ class FactorLLM:
         logger.info("Predictions complete")
 
         # Get specific keyword groups
-        high_risk_keywords = self.predictor.get_high_risk_keywords(predictions_df, threshold=0.6)
+        high_risk_keywords = self.predictor.get_declining_keywords(predictions_df)
         emerging_keywords = self.predictor.get_emerging_keywords(predictions_df)
         logger.info(f"High risk keywords: {len(high_risk_keywords)}")
         logger.info(f"Emerging keywords: {len(emerging_keywords)}")

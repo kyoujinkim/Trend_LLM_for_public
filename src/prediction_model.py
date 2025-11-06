@@ -139,19 +139,19 @@ class KeywordLifecyclePredictor:
         total_occurrences = analysis['total_occurrences']
 
         # Determine lifecycle stage
-        if trend == 'increasing' and mean_freq < 5:
+        if trend == 'increasing' and mean_freq < 1:
             stage = 'introduction'
             description = 'Emerging topic, gaining attention'
-        elif trend == 'increasing' and mean_freq >= 5:
+        elif trend == 'increasing' and mean_freq >= 1:
             stage = 'growth'
             description = 'Rapidly growing topic, high momentum'
-        elif trend == 'stable' and mean_freq >= 10:
+        elif trend == 'stable' and mean_freq >= 1:
             stage = 'maturity'
             description = 'Established topic, stable presence'
-        elif trend == 'decreasing' and mean_freq >= 5:
+        elif trend == 'decreasing' and mean_freq >= 1:
             stage = 'decline'
             description = 'Declining topic, losing attention'
-        elif trend == 'decreasing' and mean_freq < 5:
+        elif trend == 'decreasing' and mean_freq < 1:
             stage = 'obsolescence'
             description = 'Fading topic, nearing extinction'
         else:
@@ -246,6 +246,9 @@ class KeywordLifecyclePredictor:
             analysis = analysis_df[analysis_df['keyword'] == keyword].iloc[0].to_dict()
 
             prediction = self.predict_keyword_lifecycle(series, analysis)
+            if prediction['trend'] == 'no_significant_trend':
+                continue
+            prediction['total_occurrences'] = analysis['total_occurrences']
             predictions.append(prediction)
 
         # Convert to DataFrame
@@ -263,29 +266,7 @@ class KeywordLifecyclePredictor:
         logger.info("Predictions completed")
         return pred_df
 
-    def get_high_risk_keywords(self, pred_df: pd.DataFrame,
-                              threshold: float = 0.6) -> pd.DataFrame:
-        """
-        Get keywords with high extinction risk
-
-        Args:
-            pred_df: Predictions dataframe
-            threshold: Probability threshold for high risk
-
-        Returns:
-            DataFrame with high-risk keywords
-        """
-        high_risk = pred_df[
-            (pred_df['extinction_prob_365_days'] >= threshold) &
-            (pred_df['lifecycle_stage'].isin(['decline', 'obsolescence'])) &
-            (pred_df['trend'].isin(['decreasing']))
-        ].copy()
-        high_risk = high_risk.sort_values('extinction_prob_365_days', ascending=False)
-
-        logger.info(f"Found {len(high_risk)} high-risk keywords")
-        return high_risk
-
-    def get_emerging_keywords(self, pred_df: pd.DataFrame) -> pd.DataFrame:
+    def get_keywords(self, pred_df: pd.DataFrame) -> pd.DataFrame:
         """
         Get emerging keywords with growth potential
 
@@ -295,13 +276,12 @@ class KeywordLifecyclePredictor:
         Returns:
             DataFrame with emerging keywords
         """
-        emerging = pred_df[
-            (pred_df['lifecycle_stage'].isin(['introduction', 'growth'])) &
-            (pred_df['trend'] == 'increasing') &
-            (pred_df['extinction_prob_365_days'] < 0.9)
+        # increasing or stable
+        keywords = pred_df[
+            (pred_df['extinction_prob_365_days'] < 0.99)
         ].copy()
 
-        emerging = emerging.sort_values('current_frequency', ascending=False)
+        keywords = keywords.sort_values('current_frequency', ascending=False)
 
-        logger.info(f"Found {len(emerging)} emerging keywords")
-        return emerging
+        logger.info(f"Found {len(keywords)} keywords")
+        return keywords

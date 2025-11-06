@@ -74,7 +74,7 @@ class TimeSeriesAnalyzer:
 
         # Determine trend direction
         if p_value < 0.05:  # Statistically significant
-            if slope > 0:
+            if slope > 0.001:
                 trend = 'increasing'
             elif slope < 0:
                 trend = 'decreasing'
@@ -271,6 +271,8 @@ class TimeSeriesAnalyzer:
         for keyword in tqdm(freq_df.columns):
             series = freq_df[keyword]
             analysis = self.analyze_keyword_series(series, keyword)
+            if analysis['trend']=='no_significant_trend':
+                continue
             results.append(analysis)
 
         results_df = pd.DataFrame(results)
@@ -296,17 +298,17 @@ class TimeSeriesAnalyzer:
         mean_freq = analysis['mean_frequency']
 
         if trend == 'increasing':
-            if mean_freq > 10:
+            if mean_freq > 1:
                 return 'dominant_rising'
             else:
                 return 'emerging'
         elif trend == 'decreasing':
-            if mean_freq < 2:
+            if mean_freq < 1:
                 return 'declining_fast'
             else:
                 return 'declining'
         elif trend == 'stable':
-            if mean_freq > 10:
+            if mean_freq > 1:
                 return 'dominant_stable'
             else:
                 return 'stable'

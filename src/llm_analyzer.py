@@ -62,8 +62,16 @@ class LLMAnalyzer:
         Returns:
             Interpretation text
         """
+        class Keyword(BaseModel):
+            keyword: str
+            interpretation: str
+        class OutputFormat(BaseModel):
+            declining_keyword_list: List[Keyword]
+            dominant_keyword_list: List[Keyword]
+            rising_keyword_list: List[Keyword]
+
         prompt = f"""주어진 데이터는 각 키워드에 대한 정보를 담은 Dict 데이터입니다.
-        키워드에 대한 분석 결과를 바탕으로 해석과 통찰을 제공해주세요.
+        모든 데이터를 상승 추세, 안정 추세, 하락 추세로 나누고, 키워드에 대한 분석 결과를 바탕으로 해석과 통찰을 제공해주세요.
 
         데이터 : {json.dumps(input_dict, ensure_ascii=False)}
 
@@ -91,11 +99,12 @@ class LLMAnalyzer:
                 )
                 return response.content[0].text
             elif self.provider == "openai":
-                response = self.client.chat.completions.create(
+                response = self.client.responses.parse(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
+                    input=[{"role": "user", "content": prompt}],
+                    text_format=OutputFormat
                 )
-                return response.choices[0].message.content
+                return response.output_parsed
         except Exception as e:
             return f"LLM interpretation failed: {e}"
 
@@ -169,12 +178,31 @@ class LLMAnalyzer:
             trend_industry: List[IndustryTrend]
             rising_industry: List[IndustryTrend]
 
+        try:
+            interpretation_str = 'Dominant Keywords Interpretations:\n\n'
+            for k in interpretation.dominant_keyword_list:
+                interpretation_str += f"Keyword: {k.keyword}, Interpretation: {k.interpretation} \n\n"
+        except:
+            interpretation_str = ''
+        try:
+            interpretation_str += '\nRising Keywords Interpretations:\n\n'
+            for k in interpretation.rising_keyword_list:
+                interpretation_str += f"Keyword: {k.keyword}, Interpretation: {k.interpretation} \n\n"
+        except:
+            pass
+        try:
+            interpretation_str += '\nDeclining Keywords Interpretations:\n\n'
+            for k in interpretation.declining_keyword_list:
+                interpretation_str += f"Keyword: {k.keyword}, Interpretation: {k.interpretation} \n\n"
+        except:
+            pass
+
         prompt = f"""다음은 키워드 분석과 관련 뉴스 데이터를 바탕으로 전체 시장 및 트렌드에 대한 종합적인 분석입니다.
-        키워드 해석: {interpretation}
+        키워드 해석: {interpretation_str}
         관련 뉴스: {news}
         
         위 정보를 바탕으로 어떤 산업(반도체, 화학, 2차전지 등 주식 연관)에 유효한 트렌드가 형성되고 있는지, 주요 트렌드, 신규 부상 트렌드, 향후 전망 등을 포함하여 종합적인 분석을 작성해주세요.
-        각 분류별로 산업은 GICS 산업 분류(산업명(코드))로 3개씩 제시해주세요.
+        각 분류별로 산업은 GICS 산업으로 3개씩 제시해주세요.
         한국어로 작성해주세요."""
         try:
             if self.provider == "anthropic":
