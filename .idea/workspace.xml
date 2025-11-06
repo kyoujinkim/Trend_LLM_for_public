@@ -4,14 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9d10620b-b386-436a-a080-6f34f624a2ae" name="Changes" comment="data changed">
+    <list default="true" id="9d10620b-b386-436a-a080-6f34f624a2ae" name="Changes" comment="Final Update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/MemoryEfficientFactorLLM.py" beforeDir="false" afterPath="$PROJECT_DIR$/MemoryEfficientFactorLLM.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/llm_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/llm_analyzer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/prediction_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/prediction_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/report_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/report_generator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/time_series_analyzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/time_series_analyzer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +159,15 @@
       <option name="project" value="LOCAL" />
       <updated>1762330887244</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Final Update">
+      <option name="closed" value="true" />
+      <created>1762419692995</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1762419692995</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -178,79 +183,80 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="data changed" />
-    <option name="LAST_COMMIT_MESSAGE" value="data changed" />
+    <MESSAGE value="Final Update" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final Update" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>120</line>
+          <line>122</line>
           <option name="timeStamp" value="86" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>401</line>
+          <line>403</line>
           <option name="timeStamp" value="90" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>378</line>
+          <line>380</line>
           <option name="timeStamp" value="91" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>220</line>
+          <line>222</line>
           <option name="timeStamp" value="92" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>148</line>
+          <line>150</line>
           <option name="timeStamp" value="93" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>154</line>
+          <line>156</line>
           <option name="timeStamp" value="94" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>169</line>
+          <line>171</line>
           <option name="timeStamp" value="95" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>190</line>
+          <line>192</line>
           <option name="timeStamp" value="96" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>221</line>
+          <line>223</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>232</line>
+          <line>234</line>
           <option name="timeStamp" value="98" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>136</line>
+          <line>138</line>
           <option name="timeStamp" value="115" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>138</line>
+          <line>140</line>
           <option name="timeStamp" value="116" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>197</line>
+          <line>199</line>
           <option name="timeStamp" value="117" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/src/report_generator.py</url>
-          <line>209</line>
+          <line>211</line>
           <option name="timeStamp" value="118" />
         </line-breakpoint>
       </breakpoints>

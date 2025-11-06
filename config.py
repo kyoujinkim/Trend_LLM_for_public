@@ -9,6 +9,8 @@ BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "news_data_by_date"
 OUTPUT_DIR = BASE_DIR / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
+REPORT_DIR = BASE_DIR / "report_output"
+REPORT_DIR.mkdir(exist_ok=True)
 
 # Data Settings
 CSVS = [

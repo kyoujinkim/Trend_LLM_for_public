@@ -87,7 +87,7 @@ class MemoryEfficientFactorLLM:
             self.llm_analyzer = None
             logger.info("LLM analysis disabled")
 
-        self.report_generator = ReportGenerator(config.OUTPUT_DIR)
+        self.report_generator = ReportGenerator(config.REPORT_DIR)
 
         self.memory_monitor.log_memory_stats("[Init Complete] ")
         logger.info("Initialization complete")
@@ -177,7 +177,7 @@ class MemoryEfficientFactorLLM:
             interpretations=interpretations
         )
 
-        report_path = self.report_generator.generate_markdown_report(report_data)
+        report_path = self.report_generator.generate_markdown_report(report_data, target_date)
         logger.info(f"Report generated: {report_path}")
 
         # Memory summary
@@ -473,17 +473,15 @@ def main():
     # Initialize and run
     app = MemoryEfficientFactorLLM(use_llm=args.use_llm, chunk_size=args.chunk_size, huggingface_model=None)
 
-    for target_date in ['20251130', '20250131', '20250331', '20250531', '20250731', '20250930', '20251104']:
+    for target_date in ['20241130', '20250131', '20250331', '20250531', '20250731', '20250930', '20251104']:
         logger.info(f"\nRunning analysis for target date: {target_date}")
 
         try:
             report_path = app.run_only_anlaysis(target_date)
             print(f"\n✓ Analysis complete! Report saved to: {report_path}")
-            return 0
         except Exception as e:
             logger.error(f"Error during analysis: {e}", exc_info=True)
             print(f"\n✗ Error: {e}")
-            return 1
 
 
 if __name__ == "__main__":

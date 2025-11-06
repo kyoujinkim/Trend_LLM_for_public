@@ -25,7 +25,7 @@ class ReportGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
-    def generate_markdown_report(self, data: Dict, filename: str = None) -> str:
+    def generate_markdown_report(self, data: Dict, target_date: str = None) -> str:
         """
         Generate markdown report
 
@@ -36,9 +36,11 @@ class ReportGenerator:
         Returns:
             Path to generated report
         """
-        if filename is None:
+        if target_date is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"FACTOR-LLM_Report_{timestamp}.md"
+        else:
+            filename = f"FACTOR-LLM_Report_{target_date}.md"
 
         report_path = self.output_dir / filename
 
@@ -376,7 +378,7 @@ class ReportGenerator:
     def _generate_detailed_analysis_section(self, data: Dict) -> str:
         """Generate detailed analysis for selected keywords"""
         keywords = data.get('keywords_data', [])
-        top_keywords = keywords[keywords['status'=='rising']].iloc[:5]
+        top_keywords = keywords[keywords['status']=='rising'].iloc[:5]
 
         if top_keywords.empty:
             return ""
