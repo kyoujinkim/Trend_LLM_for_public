@@ -119,6 +119,12 @@ class MemoryEfficientFactorLLM:
 
     @memory_tracked()
     def run_only_anlaysis(self, target_date:str):
+        # if file alread exist in self.REPORT_DIR, skip
+        report_path = Path(config.REPORT_DIR) / f'FACTOR-LLM_Report_{target_date}.md'
+        if report_path.exists():
+            logger.info(f"Report for {target_date} already exists at {report_path}. Skipping analysis.")
+            #return str(report_path)
+
         """Run only analysis on pre-extracted keyword frequencies"""
         logger.info("=" * 80)
         logger.info("Memory-Efficient FACTOR-LLM Analysis from Pre-Extracted Data Started")
@@ -473,7 +479,13 @@ def main():
     # Initialize and run
     app = MemoryEfficientFactorLLM(use_llm=args.use_llm, chunk_size=args.chunk_size, huggingface_model=None)
 
-    for target_date in ['20241130', '20250131', '20250331', '20250531', '20250731', '20250930', '20251104']:
+    startdate = pd.to_datetime('20241130')
+    enddate = pd.to_datetime('20251104')
+    date_range = pd.date_range(start=startdate, end=enddate, freq='M').to_pydatetime().tolist()
+    date_range = [d.strftime('%Y%m%d') for d in date_range]
+    date_range = ['20251104']
+
+    for target_date in date_range:
         logger.info(f"\nRunning analysis for target date: {target_date}")
 
         try:

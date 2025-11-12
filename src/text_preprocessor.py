@@ -326,7 +326,7 @@ class TextPreprocessor:
             logger.warning("Mecab not available. Cannot extract nouns.")
             return []
 
-    def extract_pos(self, text: str, pos_tags: List[str] = ['NNG', 'NNP']) -> List[str]:
+    def extract_pos(self, text: str, pos_tags: List[str] = ['NNG', 'NNP', 'SL']) -> List[str]:
         """
         Extract words with specific POS tags
 
@@ -373,7 +373,7 @@ class TextPreprocessor:
 
         # Extract nouns if requested
         if extract_nouns_only:
-            nouns = self.extract_nouns(text)
+            nouns = self.extract_pos(text)
             return ' '.join(nouns)
         else:
             return text
